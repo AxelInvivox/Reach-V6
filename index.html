@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculateur de Reach - Invivox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* —— Thème Invivox – Ligne Ocean —— */
+    :root{
+      --ocean-50:#e7f9fb; /* fond */
+      --ocean-100:#b5ecf2;
+      --ocean-200:#92e2eb;
+      --ocean-300:#41cddd;
+      --ocean-400:#11c1d4;
+      --ocean-500:#0fb0c1; /* accent / CTA */
+      --ocean-600:#1f92ac;
+      --ocean-700:#0c8997;
+      --ocean-800:#096a75;
+      --ocean-900:#075159; /* texte fort */
+    }
+
+    * { box-sizing: border-box; }
+    html { font-size: 17px; }
+    body{
+      margin:0; font-family: 'Figtree', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--ocean-50);
+      color: var(--ocean-900);
+      line-height: 1.55;
+    }
+    header{
+      background: linear-gradient(90deg, var(--ocean-500), var(--ocean-300));
+      color:#fff; text-align:center; padding:36px 16px;
+    }
+    header h1{ margin:0 0 8px; font-size: 1.8rem; font-weight:700; }
+    header p{ margin:0; opacity:.95; font-size: 1rem; }
+
+    main{ display:flex; justify-content:center; padding:56px 16px; }
+
+    .card{
+      width:100%; max-width:820px; background:#fff; border-radius:16px; padding:28px; 
+      box-shadow: 0 10px 25px rgba(7,81,89,.07);
+    }
+
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .grid-full{ grid-column:1 / -1; }
+
+    label{ font-weight:600; font-size: .95rem; margin-bottom:6px; display:block; }
+    select, input[type="text"], input[type="email"]{
+      width:100%; padding:12px 12px; border:1px solid #d8e6ea; border-radius:10px; font-size: 1rem; background:#fff;
+    }
+
+    .helper{ font-size:.85rem; color:#4b7e86; margin-top:4px; }
+
+    .actions{ display:flex; gap:12px; align-items:center; margin-top:8px; flex-wrap: wrap; }
+    .btn{
+      appearance:none; border:none; cursor:pointer; border-radius:10px; padding:12px 18px; font-weight:700; font-size:1rem;
+      background: var(--ocean-500); color:#fff; box-shadow: 0 6px 14px rgba(15,176,193,.25);
+    }
+    .btn[disabled]{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+    .btn.secondary{ background:#fff; color:var(--ocean-500); border:1px solid var(--ocean-500); }
+
+    .consent{ display:flex; align-items:flex-start; gap:10px; font-size:.95rem; }
+    .consent input{ margin-top:3px; }
+
+    .toast{ margin-top:10px; font-size:.95rem; color: var(--ocean-800); display:none; }
+    /* garder monospace pour l'alignement ASCII mais plus grand */
+
+    footer{ text-align:center; padding:22px; color: var(--ocean-900); background: var(--ocean-100); }
+
+    @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Calculateur de Reach PDS</h1>
+    <p>Estimez le nombre de professionnels de santé atteignables avec Invivox</p>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="titre-form">
+      <h2 id="titre-form" style="margin:0 0 18px; font-size:1.3rem;">Votre simulation</h2>
+
+      <form id="reachForm" novalidate>
+        <div class="grid">
+          <div>
+            <label for="region">Région</label>
+            <select id="region" name="region" required>
+              <option value="">— Sélectionner —</option>
+              <option>France</option>
+              <option>Europe</option>
+              <option>US</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="specialite">Spécialité</label>
+            <select id="specialite" name="specialite" required>
+              <option value="">— Sélectionner —</option>
+              <option value="MG">Médecin Généraliste</option>
+              <option value="Infirmier">Infirmier</option>
+              <option value="Dermatologues">Dermatologue</option>
+              <option value="Pharmaciens">Pharmacien</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="societe">Société</label>
+            <input id="societe" name="societe" type="text" required placeholder="Ex. Invivox" />
+          </div>
+          <div>
+            <label for="poste">Poste</label>
+            <input id="poste" name="poste" type="text" required placeholder="Ex. Responsable marketing" />
+          </div>
+          <div class="grid-full">
+            <label for="email">Email professionnel</label>
+            <input id="email" name="email" type="email" required placeholder="prenom.nom@entreprise.com" />
+            <div class="helper" id="emailHelp"></div>
+          </div>
+
+          <div class="grid-full consent">
+            <input id="consent" name="consent" type="checkbox" required />
+            <label for="consent">J'accepte que mes informations soient utilisées pour me transmettre le résultat de la simulation. (RGPD)</label>
+          </div>
+        </div>
+
+        <div class="actions"><button id="downloadBtn" class="btn" type="submit" disabled>Télécharger le résultat</button>
+          <a class="btn secondary" href="https://calendly.com/adevige-invivox/30min" target="_blank" rel="noopener noreferrer">Demander une démo</a>
+        </div><div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+
+  <footer>© 2025 Invivox. Tous droits réservés.</footer>
+
+  <script>
+    // —— CONFIG ——
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzS6-DukqRR4lAJhiIg2fR5FpNJ2tWEDEjmScu5h6VI5SPAmaKy4npO-1l-bOFtiOwvPg/exec';
+
+    // —— Données ——
+    const data = {
+      France: { MG: 37000, Infirmier: 300000, Dermatologues: 1600, Pharmaciens: 42000 },
+      Europe: { MG: 120000, Infirmier: 700000, Dermatologues: 6600, Pharmaciens: 80000 },
+      US: { MG: 24000, Infirmier: 400000, Dermatologues: 2600, Pharmaciens: 51000 }
+    };
+
+    // —— Sélecteurs ——
+    const form = document.getElementById('reachForm');
+    const regionEl = document.getElementById('region');
+    const specEl = document.getElementById('specialite');
+    const emailEl = document.getElementById('email');
+    const emailHelp = document.getElementById('emailHelp');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const toast = document.getElementById('toast');
+    const consentEl = document.getElementById('consent');
+
+    // —— Règles Email ——
+    const blockedDomains = [
+      'gmail.com','googlemail.com','aol.com','icloud.com','me.com','mac.com','msn.com',
+      'hotmail.com','outlook.com','live.com','gmx.com','protonmail.com','proton.me','pm.me',
+      'wanadoo.fr','wanadoo.com','orange.fr','sfr.fr','free.fr','laposte.net','bbox.fr','numericable.fr','neuf.fr','voila.fr','aliceadsl.fr','tiscali.fr','libertysurf.fr','caramail.com',
+      'gmx.fr',
+      'yahoo.com','yahoo.fr','yahoo.co.uk','yahoo.es','yahoo.it','yahoo.de',
+      'hotmail.fr','hotmail.co.uk','outlook.fr','outlook.es','outlook.it','live.fr'
+    ];
+
+    function getDomain(email){
+      const at = email.lastIndexOf('@');
+      return at > -1 ? email.slice(at+1).toLowerCase() : '';
+    }
+    function isValidEmailFormat(email){
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+    }
+    function validateEmailField(){
+      emailEl.setCustomValidity('');
+      emailHelp.textContent = '';
+      const email = emailEl.value.trim();
+      if(!email) return;
+      if(!isValidEmailFormat(email)){
+        emailEl.setCustomValidity("Format d'email invalide");
+        emailHelp.textContent = "Exemple : prenom.nom@entreprise.com";
+        return;
+      }
+      const domain = getDomain(email);
+      if(blockedDomains.includes(domain)){
+        emailEl.setCustomValidity("Merci d'utiliser une adresse professionnelle (domaine perso bloqué).");
+        emailHelp.textContent = `Le domaine "${domain}" est bloqué.`;
+      }
+    }
+
+    // —— Helpers ——
+    const pad = n => String(n).padStart(2,'0');
+    function currentTimestamp(){
+      const d = new Date();
+      return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+    }
+
+    function compute(){
+      const region = regionEl.value;
+      const specialite = specEl.value;
+      if(!region || !specialite) return null;
+      const baseReach = data[region][specialite];
+      return { region, specialite, baseReach };
+    }
+
+    // —— Style A (fixe) ——
+    function buildTextReport(values){
+      const { region, specialite, baseReach } = values;
+      const title = 'INVIVOX · Calculateur de Reach PDS';
+      const width = 64;
+      const padLine = (s)=>{
+        const left = Math.floor((width - 2 - s.length)/2);
+        const right = width - 2 - s.length - left;
+        return '│' + ' '.repeat(Math.max(0,left)) + s + ' '.repeat(Math.max(0,right)) + '│';
+      };
+      const line = '─'.repeat(width-2);
+      return [
+        '┌'+line+'┐',
+        padLine(title),
+        '└'+line+'┘',
+        '',
+        'RÉSULTATS',
+        `- Région       : ${region}`,
+        `- Spécialité   : ${specialite}`,
+        `- Reach estimé : ${baseReach.toLocaleString('fr-FR')} professionnels`,
+        '',
+        'Merci pour votre demande de reach.',
+        'Pour savoir comment atteindre cette audience, contactez-nous :',
+        'mailto:adevige@invivox.com'
+      ].join('\n');
+    }
+
+    function triggerDownload(filename, content, mime){
+      const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      a.remove(); URL.revokeObjectURL(url);
+    }
+
+    function setToast(msg){ toast.textContent = msg; toast.style.display = 'block'; setTimeout(()=> toast.style.display='none', 4000); }
+    function checkValidity(){ validateEmailField(); downloadBtn.disabled = !form.checkValidity() || !compute(); }
+
+    async function saveLead(values){
+      const params = new URLSearchParams();
+      params.append('timestamp', new Date().toISOString());
+      params.append('societe', form.societe.value.trim());
+      params.append('poste', form.poste.value.trim());
+      params.append('email', emailEl.value.trim());
+      params.append('region', values.region);
+      params.append('specialite', values.specialite);
+      params.append('reach_total', String(values.baseReach));
+      params.append('userAgent', navigator.userAgent);
+      params.append('referrer', document.referrer);
+
+      const res = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: params.toString()
+      });
+
+      let data;
+      try { data = await res.json(); } catch(e){ data = { result:'ok' }; }
+      return data;
+    }
+
+    // —— Events ——
+    form.addEventListener('input', checkValidity);
+    emailEl.addEventListener('input', checkValidity);
+    regionEl.addEventListener('change', checkValidity);
+    specEl.addEventListener('change', checkValidity);
+    consentEl.addEventListener('change', checkValidity); return; }
+      const values = compute();
+      if(!values){ setToast('Veuillez sélectionner la région et la spécialité.'); return; }
+      preview.textContent = buildTextReport(values);
+      document.getElementById('previewWrap').style.display = 'block';
+    });
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      validateEmailField();
+      if(!form.checkValidity()) { form.reportValidity(); return; }
+      const values = compute();
+      if(!values){ setToast('Veuillez sélectionner la région et la spécialité.'); return; }
+
+      downloadBtn.disabled = true;
+
+      try{
+        const result = await saveLead(values);
+        if(result && result.result === 'error'){
+          setToast(result.message || 'Adresse email refusée.');
+          downloadBtn.disabled = false;
+          return;
+        }
+      }catch(err){
+        console.warn('Erreur envoi lead:', err);
+        setToast('Note: envoi vers Google Sheets non confirmé.');
+      }
+
+      const ts = currentTimestamp();
+      const baseName = `reach_${values.region}_${values.specialite}_${ts}`.replace(/\s+/g,'');
+      const txt = buildTextReport(values);
+      triggerDownload(baseName + '.txt', txt, 'text/plain;charset=utf-8');
+
+      setToast('Téléchargement lancé.');
+      form.reset();
+      checkValidity();
+    });
+
+    // init
+    checkValidity();
+  </script>
+</body>
+</html>
